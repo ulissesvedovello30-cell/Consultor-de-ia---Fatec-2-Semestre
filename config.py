@@ -13,3 +13,5 @@ MYSQL_SENHA = os.getenv("MYSQL_SENHA")
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
 
 RA_SALT = os.getenv("RA_SALT")
+
+CPF_SALT = os.getenv("CPF_SALT")
