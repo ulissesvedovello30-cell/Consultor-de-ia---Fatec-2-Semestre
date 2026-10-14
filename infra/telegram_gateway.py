@@ -118,9 +118,9 @@ class TelegramGateway(Mensageiro):
                 corte = self._LIMITE
             pedacos.append(restante[:corte])
             restante = restante[corte:].lstrip("\n")
-        if restante.strip():
-            pedacos.append(restante)
-        return pedacos
+        pedacos.append(restante)
+        # O Telegram rejeita mensagens só com espaços/quebras de linha.
+        return [p for p in pedacos if p.strip()]
 
 
 if __name__ == "__main__":
