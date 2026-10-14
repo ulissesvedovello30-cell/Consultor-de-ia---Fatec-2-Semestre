@@ -1,12 +1,9 @@
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 
-import mysql.connector
 from mysql.connector import pooling, Error as MySQLError
 
-
-class ErroBancoDeDados(Exception):
-    """Erro de infraestrutura do banco, sem vazar detalhes do driver."""
+from dominio.erros import ErroBancoDeDados
 
 
 @dataclass(frozen=True)
@@ -17,6 +14,8 @@ class ConfigBanco:
     database: str
     porta: int = 3306
     tamanho_pool: int = 5
+    charset: str = "utf8mb4"  # acentos e emojis
+    timeout_conexao: int = 10  # segundos; evita ficar pendurado se a rede cair
 
 
 class BancoDeDados:
@@ -37,6 +36,8 @@ class BancoDeDados:
                 user=self._config.usuario,
                 password=self._config.senha,
                 database=self._config.database,
+                charset=self._config.charset,
+                connection_timeout=self._config.timeout_conexao,
             )
         except MySQLError as e:
             raise ErroBancoDeDados("Falha ao criar pool de conexões") from e
@@ -61,7 +62,10 @@ class BancoDeDados:
             conexao.close()  # em pool, close() devolve a conexão ao pool
 
     def consultar(self, query: str, parametros: tuple = ()) -> list[dict]:
-        """SELECT. Sempre use %s + parametros; nunca concatene valores na query."""
+        """SELECT. Sempre use %s + parametros; nunca concatene valores na query.
+
+        É síncrono (bloqueante): em código async, chame com asyncio.to_thread.
+        """
         try:
             with self._conexao() as conexao:
                 cursor = conexao.cursor(dictionary=True)
@@ -74,7 +78,10 @@ class BancoDeDados:
             raise ErroBancoDeDados("Erro ao executar consulta") from e
 
     def executar(self, query: str, parametros: tuple = ()) -> int:
-        """INSERT/UPDATE/DELETE. Faz commit e retorna as linhas afetadas."""
+        """INSERT/UPDATE/DELETE. Faz commit e retorna as linhas afetadas.
+
+        É síncrono (bloqueante): em código async, chame com asyncio.to_thread.
+        """
         try:
             with self._conexao() as conexao:
                 cursor = conexao.cursor()

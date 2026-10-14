@@ -1,54 +1,50 @@
 import logging
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Awaitable, Callable
 
 from telegram import Update
 from telegram.error import TelegramError
-from telegram.ext import Application, ContextTypes, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
+
+from dominio.erros import ErroEnvioMensagem
+from dominio.mensageiro import Handler, MensagemRecebida, Mensageiro
 
 logger = logging.getLogger(__name__)
-
-
-class ErroEnvioMensagem(Exception):
-    """Falha ao enviar mensagem pelo canal, sem vazar detalhes da biblioteca."""
-
-
-@dataclass(frozen=True)
-class MensagemRecebida:
-    chat_id: int
-    usuario_id: int  # id do Telegram, não é a matrícula
-    texto: str
-
-
-Handler = Callable[[MensagemRecebida], Awaitable[None]]
-
-
-class Mensageiro(ABC):
-    """Porta de entrada/saída de mensagens, independente do canal."""
-
-    @abstractmethod
-    def ao_receber(self, handler: Handler) -> None: ...
-
-    @abstractmethod
-    async def enviar_mensagem(self, chat_id: int, texto: str) -> None: ...
-
-    @abstractmethod
-    def iniciar(self) -> None: ...
 
 
 class TelegramGateway(Mensageiro):
     _LIMITE = 4096
     _MSG_ERRO = "Algo deu errado. Tente novamente em instantes."
+    _MSG_BOAS_VINDAS = (
+        "Olá! Sou o consultor virtual da faculdade. "
+        "Envie sua dúvida em texto que eu ajudo você."
+    )
+    _MSG_SO_TEXTO = "No momento só consigo entender mensagens de texto."
 
     def __init__(self, token_bot: str):
         # O httpx loga a URL das requisições em INFO, e o token vai nela.
         logging.getLogger("httpx").setLevel(logging.WARNING)
 
-        self._app = Application.builder().token(token_bot).build()
+        # concurrent_updates: sem isso o Telegram processa uma mensagem por vez,
+        # e uma resposta lenta (LLM + banco) travaria o atendimento de todos.
+        self._app = (
+            Application.builder().token(token_bot).concurrent_updates(True).build()
+        )
         self._handler: Handler | None = None
+
+        self._app.add_handler(CommandHandler("start", self._processar_start))
         self._app.add_handler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, self._processar_update)
+        )
+        self._app.add_handler(
+            MessageHandler(
+                ~filters.TEXT & ~filters.COMMAND & ~filters.StatusUpdate.ALL,
+                self._processar_nao_texto,
+            )
         )
 
     def ao_receber(self, handler: Handler) -> None:
@@ -65,6 +61,27 @@ class TelegramGateway(Mensageiro):
                 await self._app.bot.send_message(chat_id=chat_id, text=pedaco)
         except TelegramError as e:
             raise ErroEnvioMensagem("Falha ao enviar mensagem") from e
+
+    async def _enviar_sem_falhar(self, chat_id: int, texto: str) -> None:
+        """Envio para avisos do próprio gateway: registra a falha, mas não propaga."""
+        try:
+            await self.enviar_mensagem(chat_id, texto)
+        except ErroEnvioMensagem:
+            logger.exception("Não foi possível enviar mensagem ao usuário")
+
+    async def _processar_start(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if update.message is None:
+            return
+        await self._enviar_sem_falhar(update.message.chat_id, self._MSG_BOAS_VINDAS)
+
+    async def _processar_nao_texto(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if update.message is None:
+            return
+        await self._enviar_sem_falhar(update.message.chat_id, self._MSG_SO_TEXTO)
 
     async def _processar_update(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -89,10 +106,7 @@ class TelegramGateway(Mensageiro):
         except Exception:
             # Não loga o conteúdo da mensagem (dados pessoais / LGPD).
             logger.exception("Erro ao tratar mensagem")
-            try:
-                await self.enviar_mensagem(chat_id, self._MSG_ERRO)
-            except ErroEnvioMensagem:
-                logger.exception("Não foi possível avisar o usuário sobre o erro")
+            await self._enviar_sem_falhar(chat_id, self._MSG_ERRO)
 
     def _dividir(self, texto: str) -> list[str]:
         """Quebra o texto em pedaços de até _LIMITE, preferindo quebras de linha."""
