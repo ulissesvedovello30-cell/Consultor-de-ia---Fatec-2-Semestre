@@ -1,10 +1,9 @@
-python-telegram-bot
-google-generativeai
-mysql-connector-python
 python-dotenv
-bcrypt
 numpy
 pypdf
+python-docx
 sentence-transformers
 transformers>=4.56
 accelerate
+sqlalchemy
+mysql-connector-python
