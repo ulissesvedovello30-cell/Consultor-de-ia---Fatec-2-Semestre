@@ -1,0 +1,10 @@
+.env
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+pytest-of-root/
+runtime/
+node_modules/
+*.sqlite3
+*.log
