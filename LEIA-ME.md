@@ -14,7 +14,7 @@ python -m venv .venv
 
 Escolha **1 — Demonstração**. O servidor abre o navegador quando estiver pronto. Se isso não acontecer, acesse **http://127.0.0.1:8000**. Mantenha o terminal aberto; `Ctrl+C` encerra o serviço.
 
-O modo 1 usa SQLite real via SQLAlchemy, documentos fictícios e recuperação lexical, sem Gemini, MySQL, downloads de modelos ou credenciais. Não é equivalente à busca semântica. Há um aviso permanente de demonstração no site. A consulta pública funciona imediatamente e não exige login.
+O modo 1 usa SQLite real via SQLAlchemy, os documentos da pasta `documentos/` (calendário acadêmico 2026 e horário do curso de IA) e recuperação lexical, sem Gemini, MySQL, downloads de modelos ou credenciais. Não é equivalente à busca semântica. Há um aviso permanente de demonstração no site. A consulta pública funciona imediatamente e não exige login.
 
 Para testar o painel administrativo, encerre o servidor, execute o comando abaixo e inicie novamente:
 
@@ -46,7 +46,7 @@ No VS Code também é possível selecionar o interpretador `.venv`, abrir `inici
 .\.venv\Scripts\python.exe servidor.py --abrir
 ```
 
-9. Entre como administrador e envie documentos públicos revisados. O modo oficial começa com o acervo do MySQL; **não carrega os exemplos fictícios**. Sem documentos, o consultor informa que não encontrou evidência.
+9. Entre como administrador e envie documentos públicos revisados. Os documentos iniciais já estão em `documentos/`: publique-os pelo painel ou, de uma vez, com `.\.venv\Scripts\python.exe indexar_pdfs.py documentos` (usa o MySQL e a chave Gemini do `.env`). O modo oficial começa com o acervo do MySQL; **não carrega os exemplos fictícios**. Sem documentos, o consultor informa que não encontrou evidência.
 
 Não há Qwen, Torch, Transformers, MiniLM, Ollama ou outro modelo local nesta versão. A inferência e os embeddings oficiais usam REST da API Gemini via HTTPX.
 
@@ -74,9 +74,17 @@ A exclusão pelo painel remove fisicamente documento, versões, textos e vetores
 
 Informe curso, turma/período, ano, vigência e URL oficial quando relevantes. Em ambiguidades entre metadados recuperados, o sistema pede esclarecimento. Filtros não resolvem automaticamente todos os conflitos semânticos.
 
-PDF, DOCX e TXT são aceitos, até 25 MB por upload. PDFs protegidos, com mais de 300 páginas ou com páginas sem texto suficiente são recusados; aplique OCR antes. O processamento não tem OCR automático. DOCX tem limite de expansão. O upload é sequencial e só anuncia sucesso após a gravação. Há prazo de cinco minutos para indexação remota; divida documentos maiores.
+PDF, DOCX, TXT e XLSX são aceitos, até 25 MB por upload. PDFs protegidos, com mais de 300 páginas ou com páginas sem texto suficiente são recusados; aplique OCR antes. O processamento não tem OCR automático. DOCX tem limite de expansão. O upload é sequencial e só anuncia sucesso após a gravação. Há prazo de cinco minutos para indexação remota; divida documentos maiores.
 
 Os trechos são pré-divididos por caracteres. Na API de embeddings, `autoTruncate=false` impede aceitar silenciosamente uma entrada cortada; se o limite remoto for excedido, a operação falha e preserva a versão anterior. Não mantemos tokenizer local nem presumimos equivalência entre caracteres e tokens.
+
+## Documentos da pasta `documentos/`
+
+Coloque ali os documentos públicos (PDF, DOCX, TXT ou XLSX). Na demonstração (modo 1), **tudo o que estiver na pasta é indexado a cada início**: o banco de debug é refeito, então um arquivo removido some e um arquivo novo entra sozinho. No modo oficial nada é indexado automaticamente: publique pelo painel ou com `indexar_pdfs.py documentos` (aceita arquivos e pastas). Arquivo recusado pela política de privacidade ou pela inspeção de segurança é ignorado na demonstração, com aviso no terminal.
+
+- **Calendário em PDF** (um bloco por mês, com a grade do mês e linhas como `04 Início das aulas`): cada evento é reescrito como `Dia 4 de fevereiro de 2026 (quarta-feira): Início do 1º Semestre de 2026`. Sem isso, o trecho `04 Início das aulas` perderia o mês. `servicos/calendario.py` faz a conversão e só atua quando o PDF tem ao menos três cabeçalhos de mês; outros PDFs seguem o caminho normal. Neste layout o excedente de um mês continua no topo da página seguinte, e o PDF pode colocar outro bloco (ex.: janeiro) entre os dois; o código devolve esses eventos ao primeiro mês da página anterior. Se um calendário futuro tiver layout diferente, confira o resultado rodando `python -c "from pathlib import Path; from seguranca.extracao import extrair_protegido; from servicos.calendario import normalizar_calendario; print(*[t for _, t in normalizar_calendario(extrair_protegido(Path('documentos/ARQUIVO.pdf')))], sep='\n\n')"`.
+- **Horário em XLSX** (um bloco por semestre, dias da semana na linha seguinte, horários na primeira coluna, disciplina numa linha e professor na de baixo): cada célula vira `1º semestre, terça-feira, das 7h40 às 9h20: Projeto I. Professor(a): Fulano.`. Células mescladas valem para toda a faixa; rodapés viram observações; só as 64 primeiras colunas e 2.000 linhas são lidas (planilhas costumam ter formatação esticada até a coluna XFB); abas ocultas e abas sem horário são ignoradas quando existe uma aba de horário. Planilhas sem esse formato são lidas linha a linha, com a primeira linha como cabeçalho. O horário publicado inclui o nome dos professores, informação pública do horário; remova a linha de professores da planilha se a instituição não quiser publicá-los.
+- A aba do horário entregue chama-se `2026_02_Rascunho`. Confirme com a coordenação se é a versão oficial antes de publicar.
 
 ## Segurança e falhas
 

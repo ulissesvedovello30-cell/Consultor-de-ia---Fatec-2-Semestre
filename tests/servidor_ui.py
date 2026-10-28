@@ -1,6 +1,7 @@
 """Servidor de testes de interface, isolado e restrito à máquina local."""
 import tempfile
 import os
+from functools import partial
 from pathlib import Path
 import uvicorn
 from debug_web import abrir_demo
@@ -13,4 +14,5 @@ if __name__ == '__main__':
         config = ConfigWeb(origem='http://127.0.0.1:8767', senha_hash=gerar_hash('senha-teste-interface-123'),
                            seguranca_db=str(Path(pasta) / 'seguranca.db'),
                            totp_segredo=os.getenv('TESTE_TOTP', ''))
-        uvicorn.run(criar_app(abrir_demo, config, 'debug'), host='127.0.0.1', port=8767, access_log=False)
+        fixture = Path(__file__).resolve().parents[1] / 'dados/turma_exemplo.txt'  # documento fictício de teste
+        uvicorn.run(criar_app(partial(abrir_demo, [fixture]), config, 'debug'), host='127.0.0.1', port=8767, access_log=False)

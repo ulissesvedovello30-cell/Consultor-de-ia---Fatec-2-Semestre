@@ -169,7 +169,7 @@ async function forget() {
 }
 async function serviceInfo() {
   const info = await request('/api/info');
-  $('mode').textContent = info.modo === 'debug' ? 'DEMONSTRAÇÃO · dados fictícios · sem Gemini' : 'GEMINI · acervo público';
+  $('mode').textContent = info.modo === 'debug' ? 'DEMONSTRAÇÃO · busca simplificada · sem Gemini' : 'GEMINI · acervo público';
   $('privacy-contact').textContent = `${info.responsavel} — ${info.contato}`;
   const health = await request('/api/health');
   if (!health.pronto) throw new Error('Serviço indisponível.');

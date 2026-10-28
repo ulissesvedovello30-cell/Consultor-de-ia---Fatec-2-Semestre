@@ -20,11 +20,12 @@ def limitar_recursos():
 
 def processar(caminho):
     """Valide estrutura e extraia páginas; retorne apenas erro público ou conteúdo."""
-    from seguranca.arquivos import conferir_docx
+    from seguranca.arquivos import conferir_docx, conferir_xlsx
     from servicos.processador_documento import extrair_paginas
     try:
-        if caminho.suffix.lower() == '.docx':
-            conferir_docx(caminho)
+        conferidor = {'.docx': conferir_docx, '.xlsx': conferir_xlsx}.get(caminho.suffix.lower())
+        if conferidor:
+            conferidor(caminho)
         return {'paginas': extrair_paginas(caminho)}
     except ErroIndexacao as erro:
         return {'erro': str(erro)}

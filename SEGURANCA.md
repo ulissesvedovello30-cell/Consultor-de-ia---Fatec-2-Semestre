@@ -69,9 +69,9 @@ Esses valores são pontos de partida conservadores. Uma rede de faculdade pode c
 
 ## Uploads
 
-Nomes com caminhos, caracteres de controle/invisíveis e dispositivos reservados são recusados. DOCX tem limites de expansão/quantidade e rejeita caminhos suspeitos, entradas duplicadas, macros, objetos incorporados, relações externas e DTD/entidades. Um DOCX com hyperlink externo também pode ser recusado: remova o vínculo ou exporte como TXT/PDF.
+Nomes com caminhos, caracteres de controle/invisíveis e dispositivos reservados são recusados. DOCX tem limites de expansão/quantidade e rejeita caminhos suspeitos, entradas duplicadas, macros, objetos incorporados, relações externas e DTD/entidades. Um DOCX com hyperlink externo também pode ser recusado: remova o vínculo ou exporte como TXT/PDF. O XLSX passa pelas mesmas verificações (expansão, caminhos, duplicatas, DTD/entidades, relações externas) e, além de macros, objetos incorporados e ActiveX, recusa vínculos para outras pastas de trabalho (`externalLinks`), objetos OLE, conexões de dados e controles de formulário. A leitura só usa valores já calculados, não executa fórmulas e ignora vínculos externos.
 
-PDF rejeita ações, JavaScript, formulários e anexos, além dos limites de páginas/texto anteriores. A extração PDF/DOCX roda em subprocesso descartável com prazo de 20 segundos. Em POSIX há limites adicionais de memória, CPU, arquivos abertos e tamanho da saída; no Windows, o prazo é aplicado pelo processo pai. Credenciais do ambiente não são copiadas para o worker.
+PDF rejeita ações, JavaScript, formulários e anexos, além dos limites de páginas/texto anteriores. A extração PDF/DOCX/XLSX roda em subprocesso descartável com prazo de 20 segundos. Em POSIX há limites adicionais de memória, CPU, arquivos abertos e tamanho da saída; no Windows, o prazo é aplicado pelo processo pai. Credenciais do ambiente não são copiadas para o worker.
 
 O subprocesso é isolamento de falha/consumo, **não uma sandbox completa do sistema operacional**: ainda roda com o mesmo usuário e suas permissões de arquivos/rede. Filtros não são um antivírus nem eliminam vulnerabilidades desconhecidas dos parsers. Em produção use conta de serviço sem privilégios, filesystem mínimo e isolamento/antivírus conforme a política institucional. Atualize dependências após testes.
 

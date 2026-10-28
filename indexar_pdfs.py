@@ -6,13 +6,14 @@ import config
 from infra.gemini_http import ClienteGemini, ErroGemini
 from dominio.erros import ErroBancoDeDados, ErroIndexacao
 from montagem import banco_aberto, criar_base
+from servicos.pasta import expandir
 from servicos.prazo import FIM
 
 
 def argumentos():
     """Retorne caminhos e opção de substituição definidos na linha de comando."""
     parser = argparse.ArgumentParser(description='Indexa arquivos públicos revisados no MySQL.')
-    parser.add_argument('arquivos', nargs='+', type=Path)
+    parser.add_argument('arquivos', nargs='+', type=Path, help='arquivos ou pastas (ex.: documentos)')
     parser.add_argument('--forcar', action='store_true')
     return parser.parse_args()
 
@@ -36,7 +37,7 @@ def main():
     try:
         with banco_aberto() as engine:
             base = criar_base(engine, cliente)
-            for caminho in args.arquivos:
+            for caminho in expandir(args.arquivos):
                 print(f'{caminho.name}: {indexar_um(base, caminho, args.forcar)} trechos publicados.')
     finally:
         cliente.fechar()

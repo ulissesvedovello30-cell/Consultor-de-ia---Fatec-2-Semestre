@@ -17,8 +17,8 @@ def validar_nome(nome):
         raise HTTPException(422, 'Nome de arquivo inválido.')
     if re.search(r'[:*?"<>|]', nome) or nome.endswith((' ', '.')):
         raise HTTPException(422, 'Nome incompatível com o sistema de arquivos.')
-    if Path(nome).suffix.lower() not in {'.pdf', '.docx', '.txt'}:
-        raise HTTPException(415, 'Envie PDF, DOCX ou TXT.')
+    if Path(nome).suffix.lower() not in {'.pdf', '.docx', '.txt', '.xlsx'}:
+        raise HTTPException(415, 'Envie PDF, DOCX, TXT ou XLSX.')
     conferir_nome_portavel(nome)
     return nome
 
@@ -37,26 +37,38 @@ async def salvar_stream(request, destino, limite):
 
 
 def validar_conteudo(caminho):
-    """Verifique assinatura PDF, estrutura DOCX ou ausência de bytes binários no TXT."""
+    """Verifique assinatura PDF, estrutura DOCX/XLSX ou ausência de bytes binários no TXT."""
     if caminho.suffix.lower() == '.pdf' and not caminho.read_bytes()[:1024].lstrip().startswith(b'%PDF-'):
         raise ErroIndexacao('O arquivo não contém um PDF válido.')
     if caminho.suffix.lower() == '.docx':
         validar_docx(caminho)
+    if caminho.suffix.lower() == '.xlsx':
+        validar_xlsx(caminho)
     if caminho.suffix.lower() == '.txt' and b'\x00' in caminho.read_bytes():
         raise ErroIndexacao('TXT contém dados binários.')
 
 
 def validar_docx(caminho):
     """Recuse ZIP inválido, expansão excessiva ou ausência de estrutura DOCX."""
+    validar_pacote(caminho, 'DOCX', 'word/document.xml')
+
+
+def validar_xlsx(caminho):
+    """Recuse ZIP inválido, expansão excessiva ou ausência de estrutura XLSX."""
+    validar_pacote(caminho, 'XLSX', 'xl/workbook.xml')
+
+
+def validar_pacote(caminho, rotulo, principal):
+    """Confira que o ZIP é um documento Office do tipo esperado e não se expande demais."""
     try:
         with zipfile.ZipFile(caminho) as arquivo:
             infos = arquivo.infolist()
             if sum(i.file_size for i in infos) > 50 * 1024 * 1024 or len(infos) > 3000:
-                raise ErroIndexacao('DOCX expandido excede o limite permitido.')
-            if 'word/document.xml' not in arquivo.namelist():
-                raise ErroIndexacao('DOCX inválido.')
+                raise ErroIndexacao(f'{rotulo} expandido excede o limite permitido.')
+            if principal not in arquivo.namelist():
+                raise ErroIndexacao(f'{rotulo} inválido.')
     except zipfile.BadZipFile as erro:
-        raise ErroIndexacao('DOCX inválido.') from erro
+        raise ErroIndexacao(f'{rotulo} inválido.') from erro
 
 
 async def receber_upload(request, nome, metadados):

@@ -14,7 +14,7 @@ from web.configuracao import ConfigWeb
 def argumentos():
     """Leia opções da CLI e retorne modo e preferência de abertura do navegador."""
     parser = argparse.ArgumentParser(description='Consultor Fatec com frontend e API.')
-    parser.add_argument('--demo', action='store_true', help='SQLite fictício, sem Gemini ou MySQL.')
+    parser.add_argument('--demo', action='store_true', help='SQLite com a pasta documentos/, sem Gemini ou MySQL.')
     parser.add_argument('--abrir', action='store_true', help='Abra o navegador quando o servidor responder.')
     return parser.parse_args()
 

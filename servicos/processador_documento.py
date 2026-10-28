@@ -1,22 +1,29 @@
 import re
 from pathlib import Path
 from dominio.erros import ErroIndexacao
+from servicos.calendario import normalizar_calendario
 
 ITEM = re.compile(r'[•\-–*]\s')
 
 
 def extrair_paginas(caminho: Path):
     """Retorne pares de página e texto; recuse formato inválido ou conteúdo excessivo."""
-    extratores = {'.pdf': extrair_pdf, '.docx': extrair_docx, '.txt': extrair_txt}
+    extratores = {'.pdf': extrair_pdf, '.docx': extrair_docx, '.txt': extrair_txt, '.xlsx': extrair_xlsx}
     try:
         paginas = extratores[caminho.suffix.lower()](caminho)
     except KeyError:
-        raise ErroIndexacao('Formato não suportado. Aceitos: PDF, DOCX, TXT.') from None
+        raise ErroIndexacao('Formato não suportado. Aceitos: PDF, DOCX, TXT, XLSX.') from None
     except (OSError, ValueError) as erro:
         raise ErroIndexacao('Não foi possível ler o documento.') from erro
     if sum(len(texto) for pagina, texto in paginas) > 2_000_000:
         raise ErroIndexacao('Documento excede dois milhões de caracteres. Divida o arquivo.')
     return paginas
+
+
+def extrair_xlsx(caminho):
+    """Retorne os fatos de uma planilha XLSX (horários ou tabelas), sem número de página."""
+    from servicos.planilha import extrair_xlsx as ler
+    return ler(caminho)
 
 
 def abrir_pdf(caminho):
@@ -53,7 +60,7 @@ def extrair_pdf(caminho):
         raise ErroIndexacao(f'Leitura incompleta nas páginas {lista}. Aplique OCR e envie novamente; nada foi atualizado.')
     if not paginas:
         raise ErroIndexacao('PDF vazio.')
-    return paginas
+    return normalizar_calendario(paginas)
 
 
 def decodificar(bruto):

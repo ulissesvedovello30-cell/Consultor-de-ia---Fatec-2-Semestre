@@ -9,7 +9,7 @@ from dominio.erros import ErroIndexacao
 
 
 def extrair_protegido(caminho):
-    """Retorne páginas extraídas; encerre PDF/DOCX que excedam 20 segundos.
+    """Retorne páginas extraídas; encerre PDF/DOCX/XLSX que excedam 20 segundos.
 
     Args:
         caminho: Arquivo local previamente recebido e limitado a 25 MB.
@@ -23,7 +23,7 @@ def extrair_protegido(caminho):
     from servicos.processador_documento import extrair_paginas
     if caminho.stat().st_size > 25 * 1024 * 1024:
         raise ErroIndexacao('Arquivo excede 25 MB.')
-    if caminho.suffix.lower() not in {'.pdf', '.docx'}:
+    if caminho.suffix.lower() not in {'.pdf', '.docx', '.xlsx'}:
         return extrair_paginas(caminho)
     with tempfile.TemporaryDirectory(prefix='consultor-parser-') as pasta:
         saida = Path(pasta) / 'resultado.json'

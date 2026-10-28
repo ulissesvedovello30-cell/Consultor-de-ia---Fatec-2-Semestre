@@ -1,3 +1,21 @@
+## Atualização de 28/10/2026: documentos reais e XLSX
+
+Suíte: **269 testes passaram e 1 foi ignorado** (224 anteriores e 45 novos), em Python 3.14 com as versões de `requirements.txt`.
+
+Executado:
+- Calendário Acadêmico 2026 (PDF, 8 páginas) e horário do curso de IA (XLSX) pelo extrator protegido em subprocesso e pelo filtro de privacidade: ambos passam. O calendário vira 150 eventos datados; o horário vira 62 fatos (60 aulas e 2 observações).
+- A demonstração (modo 1) subida por `abrir_demo` com o cliente de teste do FastAPI, com perguntas pela rota `/api/chat`.
+- XLSX com macro, vínculo externo, objeto incorporado, DTD, caminho suspeito, expansão excessiva, falso (não é ZIP) e DOCX renomeado, todos recusados; upload autenticado de XLSX e consulta posterior.
+
+Não executado:
+- Modo oficial (MySQL + Gemini): sem credenciais. A publicação de `documentos/` no MySQL e os embeddings Gemini desses documentos precisam ser feitos por quem tem a chave e o banco.
+- Testes JavaScript de `tests_front` e navegador real. Os servidores de teste agora indexam `dados/turma_exemplo.txt` explicitamente, pois a demonstração passou a usar `documentos/`.
+
+Limites conhecidos:
+- A demonstração usa busca lexical (palavras), com radical simples e poucos sinônimos de calendário. Ela erra perguntas que dependem de significado (ex.: quem leciona uma disciplina pode retornar um trecho curto com a palavra "aula"). A qualidade de verdade vem da busca semântica do modo oficial, que ainda precisa ser avaliada com perguntas reais.
+- O conversor de calendário foi validado só com o layout deste PDF (um bloco por mês, eventos `DD descrição`, excedente no topo da página seguinte). Outro layout exige conferência.
+- A aba do horário chama-se `2026_02_Rascunho`; confirme se é a versão oficial.
+
 # Validação desta entrega
 
 Concluída em 22/10/2026.

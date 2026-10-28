@@ -11,6 +11,15 @@ import unicodedata
 import numpy as np
 
 
+SINONIMOS = {'comec': 'inici', 'fim': 'termi', 'encer': 'termi'}  # 'começa' ~ 'início', 'fim' ~ 'término'
+
+
+def radical(palavra):
+    """Reduza a palavra a um radical tosco (sem 's' final, até 5 letras) para casar 'trancar' com 'trancamento'."""
+    raiz = (palavra.rstrip('s') if len(palavra) > 3 else palavra)[:5]
+    return SINONIMOS.get(raiz, raiz)
+
+
 class EmbeddingsLexicais:
     """Vetor de palavras (contagem em 1024 posições), sem rede neural."""
 
@@ -32,6 +41,7 @@ class EmbeddingsLexicais:
         for palavra in re.findall(r"[a-z0-9]+", sem_acento):
             if palavra in self._IGNORAR:
                 continue
+            palavra = radical(palavra)
             posicao = int.from_bytes(hashlib.blake2b(palavra.encode(), digest_size=8).digest(), "big") % self._DIMENSAO
             vetor[posicao] += 1
         norma = np.linalg.norm(vetor)

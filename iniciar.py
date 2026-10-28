@@ -6,7 +6,7 @@ from pathlib import Path
 
 def main():
     """Peça o modo e execute o servidor usando o mesmo interpretador Python."""
-    print('1 — Demonstração (SQLite fictício, sem chave)\n2 — Oficial (MySQL + Gemini)\n0 — Sair')
+    print('1 — Demonstração (SQLite com a pasta documentos/, sem chave)\n2 — Oficial (MySQL + Gemini)\n0 — Sair')
     escolhas = {'1': ['--demo', '--abrir'], '2': ['--abrir'], '0': None}
     try:
         argumentos = escolhas[input('Escolha [1/2/0]: ').strip()]

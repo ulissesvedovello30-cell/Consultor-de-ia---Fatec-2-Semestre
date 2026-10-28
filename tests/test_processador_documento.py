@@ -65,13 +65,13 @@ def test_txt_vem_sem_pagina_e_aceita_utf8_ou_cp1252(tmp_path):
 def test_arquivo_vazio_e_formato_desconhecido_dao_erro_claro(tmp_path):
     vazio = tmp_path / "vazio.txt"
     vazio.write_text("   \n", encoding="utf-8")
-    planilha = tmp_path / "notas.xlsx"
-    planilha.write_bytes(b"x")
+    slides = tmp_path / "aula.pptx"  # XLSX agora é aceito; PPTX segue fora
+    slides.write_bytes(b"x")
 
     with pytest.raises(ErroIndexacao, match="vazio"):
         extrair_paginas(vazio)
     with pytest.raises(ErroIndexacao, match="não suportado"):
-        extrair_paginas(planilha)
+        extrair_paginas(slides)
 
 
 def test_docx_junta_paragrafos_e_transforma_cada_linha_de_tabela_em_um_fato(tmp_path):

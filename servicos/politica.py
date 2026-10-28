@@ -18,6 +18,8 @@ ESCOPO = re.compile(
     r'biblioteca|estagio|tcc|documento\w*|declaracao|edital|vestibular|'
     r'evento\w*|feira|horario|sala\w*|professor\w*|disciplina\w*|ferias|'
     r'enrollment|exam\w*|class\w*|calendar|library|college|internship|'
+    r'dia|data|datas|prazo\w*|feriado\w*|recesso|inscri\w*|trancamento|trancar|semana\w*|letivo\w*|'
+    r'hackathon|palestra\w*|'
     r'isso|disso|esse|essa|quando|onde|when|where)\b', re.I)
 
 

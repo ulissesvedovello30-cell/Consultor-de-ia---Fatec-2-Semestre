@@ -10,12 +10,15 @@ from web.configuracao import ConfigWeb
 from web.senhas import gerar_hash
 
 
+FIXTURE = Path(__file__).resolve().parents[1] / 'dados/turma_exemplo.txt'  # documento fictício de teste
+
+
 @contextmanager
 def fabrica():
     with TemporaryDirectory() as pasta:
         engine = create_engine('sqlite:///' + str(Path(pasta) / 'teste.db'))
         try:
-            yield montar_demo(engine)
+            yield montar_demo(engine, [FIXTURE])
         finally:
             engine.dispose()
 
