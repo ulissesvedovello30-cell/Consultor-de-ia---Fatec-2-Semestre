@@ -1,0 +1,103 @@
+# Arquivo de exemplo COMPLETO para Nginx no mesmo host do Python.
+# Edite dominio.invalid, caminhos TLS e includes; valide com nginx -t.
+# Não substitua um nginx.conf existente sem integrar às demais aplicações.
+worker_processes auto;
+error_log /var/log/nginx/consultor-error.log crit;
+pid /run/nginx.pid;
+events { worker_connections 1024; }
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    server_tokens off;
+    access_log off;
+    client_header_timeout 10s;
+    client_body_timeout 10s;
+    send_timeout 15s;
+    keepalive_timeout 10s;
+    keepalive_requests 100;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 2 8k;
+    client_max_body_size 8k;
+    client_body_buffer_size 16k;
+    reset_timedout_connection on;
+    limit_req_zone $binary_remote_addr zone=por_ip:10m rate=2r/s;
+    limit_req_zone $server_name zone=global:1m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+    limit_conn_zone $binary_remote_addr zone=conexoes:10m;
+    limit_req_status 429;
+    limit_conn_status 429;
+    upstream consultor { server 127.0.0.1:8000; keepalive 8; }
+    server {
+        listen 80 default_server;
+        server_name _;
+        return 444;
+    }
+    server {
+        listen 80;
+        server_name dominio.invalid;
+        return 301 https://dominio.invalid$request_uri;
+    }
+    server {
+        listen 443 ssl default_server;
+        server_name _;
+        ssl_reject_handshake on;
+    }
+    server {
+        listen 443 ssl;
+        server_name dominio.invalid;
+        ssl_certificate /etc/letsencrypt/live/dominio.invalid/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/dominio.invalid/privkey.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        limit_conn conexoes 10;
+        limit_req zone=por_ip burst=15 nodelay;
+        limit_req zone=global burst=30 nodelay;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host dominio.invalid;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_request_buffering on;
+        proxy_buffering on;
+        proxy_connect_timeout 3s;
+        proxy_send_timeout 65s;
+        proxy_read_timeout 130s;
+        error_page 429 = @limite;
+        error_page 413 = @corpo_grande;
+        error_page 502 503 504 = @indisponivel;
+        location @limite {
+            default_type application/json;
+            add_header Retry-After 60 always;
+            add_header Cache-Control no-store always;
+            return 429 '{"detail":"Limite de acesso. Aguarde antes de repetir."}';
+        }
+        location @corpo_grande {
+            default_type application/json;
+            return 413 '{"detail":"Requisicao excede o limite."}';
+        }
+        location @indisponivel {
+            default_type application/json;
+            add_header Retry-After 5 always;
+            return 503 '{"detail":"Servico temporariamente indisponivel."}';
+        }
+        location = /api/admin/login {
+            include /etc/nginx/consultor/admin-allowlist.conf;
+            # Ao definir limit_req aqui, repita as zonas do server (não são herdadas).
+            limit_req zone=por_ip burst=15 nodelay;
+            limit_req zone=global burst=30 nodelay;
+            limit_req zone=login burst=2 nodelay;
+            proxy_pass http://consultor;
+        }
+        location = /api/admin/documentos {
+            include /etc/nginx/consultor/admin-allowlist.conf;
+            client_max_body_size 25m;
+            proxy_read_timeout 310s;
+            proxy_pass http://consultor;
+        }
+        location /api/admin/ {
+            include /etc/nginx/consultor/admin-allowlist.conf;
+            proxy_pass http://consultor;
+        }
+        location / { proxy_pass http://consultor; }
+    }
+}

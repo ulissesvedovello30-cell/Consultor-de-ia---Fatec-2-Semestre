@@ -1,0 +1,6 @@
+# Edite ANTES da implantação: IP de saída da secretaria ou rede da VPN.
+# Exemplo de sintaxe (endereço de documentação, substitua pelo real):
+# allow 192.0.2.10;
+allow 127.0.0.1;
+allow ::1;
+deny all;
