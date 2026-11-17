@@ -1,0 +1,1 @@
+{"name":"consultor-fatec-interface-tests","private":true,"scripts":{"test":"node app.test.cjs"},"devDependencies":{"jsdom":"26.0.0"},"engines":{"node":">=22"}}

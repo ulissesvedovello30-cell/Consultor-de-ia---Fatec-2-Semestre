@@ -1,0 +1,15 @@
+# Ambiente e arquivos gerados
+.env
+.venv/
+venv/
+runtime/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+node_modules/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.db
