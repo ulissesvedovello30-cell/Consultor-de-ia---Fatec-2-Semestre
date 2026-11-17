@@ -1,0 +1,26 @@
+{
+  "fontes": [
+    {
+      "arquivo": "PPC_IA_RioClaro_2025_1.pdf",
+      "sha256": "01b33525f5b922ad4bb30567b264ef25c32f0987848d3743fd79a32b5b40406a",
+      "curso": "IA",
+      "url_oficial": "https://fatecrioclaro.cps.sp.gov.br/ia/"
+    },
+    {
+      "arquivo": "PPC-CST-ESG.pdf",
+      "sha256": "abbc028a4ea8d3c1e5d2a373ae512c485130c550f8f0990c50c1da9d4a4ad9f3",
+      "curso": "ESG",
+      "url_oficial": "https://fatecrioclaro.cps.sp.gov.br/esg/"
+    },
+    {
+      "arquivo": "FAQ_secretaria.txt",
+      "sha256": "32ede97ebe82ba24ad780490835e1373cf962525445b488ab1ba623d6d9a115f",
+      "curso": "",
+      "url_oficial": ""
+    }
+  ],
+  "hashes_ficticios_removidos": [
+    "fe837cf3819262dd4dbf1fa95ffa6ac30418db3a67a25750a1d6fced284b901f",
+    "ce00e83d635c271b6ce0732b928cc805e57b81cd104ab0bcbe4ce4ffacfb07ed"
+  ]
+}

@@ -1,0 +1,35 @@
+# Informações da Turma do 2º Semestre - Fatec (dados de exemplo)
+
+## Calendário de aulas
+
+Aulas de Banco de Dados da turma do 2º semestre: segundas-feiras e quartas-feiras, das 19h00 às 20h40, na sala 5, com o professor Exemplo Silva.
+
+Aulas de Engenharia de Software da turma do 2º semestre: terças-feiras, das 19h00 às 22h30, no laboratório 2, com a professora Exemplo Souza.
+
+Aulas de Algoritmos e Lógica de Programação da turma do 2º semestre: quintas-feiras, das 19h00 às 22h30, no laboratório 1, com o professor Exemplo Lima.
+
+Aulas de Inglês da turma do 2º semestre: sextas-feiras, das 19h00 às 20h40, na sala 3, com a professora Exemplo Costa.
+
+Fim do semestre letivo da turma do 2º semestre: sexta-feira, 11 de dezembro de 2026.
+
+## Provas marcadas pelos professores
+
+Prova de Banco de Dados da turma do 2º semestre: quarta-feira, 11 de novembro de 2026, às 19h00, na sala 5. Conteúdo: modelagem de dados e SQL básico. Prova marcada pelo professor Exemplo Silva.
+
+Prova de Engenharia de Software da turma do 2º semestre: terça-feira, 17 de novembro de 2026, às 19h00, no laboratório 2. Conteúdo: levantamento de requisitos e diagramas UML. Prova marcada pela professora Exemplo Souza.
+
+Prova de Algoritmos e Lógica de Programação da turma do 2º semestre: quinta-feira, 19 de novembro de 2026, às 19h00, no laboratório 1. Conteúdo: estruturas de repetição e vetores. Prova marcada pelo professor Exemplo Lima.
+
+Prova de Inglês da turma do 2º semestre: sexta-feira, 27 de novembro de 2026, às 19h00, na sala 3. Conteúdo: leitura de texto técnico. Prova marcada pela professora Exemplo Costa.
+
+## Eventos divulgados pela Fatec
+
+Evento Semana de Tecnologia da Fatec: de segunda-feira, 2 de novembro, a sexta-feira, 6 de novembro de 2026, sempre às 20h00, no auditório. Aberto a todos os alunos.
+
+Evento Palestra de Carreira em Tecnologia: sábado, 21 de novembro de 2026, às 9h00, no auditório. Aberto a todos os alunos.
+
+Evento Feira de Projetos da Fatec: sábado, 5 de dezembro de 2026, das 9h00 às 13h00, no pátio principal. Os alunos apresentam os projetos do semestre.
+
+## Avisos da secretaria
+
+Dúvidas sobre notas, matrícula e documentos devem ser tratadas na secretaria acadêmica da Fatec, de segunda a sexta-feira, das 18h00 às 21h00.
