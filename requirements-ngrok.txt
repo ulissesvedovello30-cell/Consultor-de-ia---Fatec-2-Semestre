@@ -1,2 +1,0 @@
-# Dependência opcional para python servidor.py --ngrok.
-pyngrok==9.1.2
