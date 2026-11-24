@@ -16,7 +16,7 @@ def criar_indice(engine):
         ErroBancoDeDados: Se o SQLite instalado não oferecer FTS5.
     """
     try:
-        with engine.begin() as c:
+        with engine.connect().execution_options(escrita_acervo=True) as c, c.begin():
             existente = c.scalar(text("SELECT name FROM sqlite_master WHERE name='rag_busca_textual'"))
             c.exec_driver_sql("CREATE VIRTUAL TABLE IF NOT EXISTS rag_busca_textual USING fts5(texto, content='rag_trecho', content_rowid='id', tokenize='unicode61 remove_diacritics 2')")
             criar_gatilhos(c)
@@ -50,7 +50,7 @@ def buscar(repo, modelo, expressao, k, cursos=()):
         list: Trechos ativos, com seus metadados e páginas.
     """
     indice = table('rag_busca_textual', column('rowid'))
-    consulta = consulta_vigente(modelo).join(indice, indice.c.rowid == trechos.c.id)
+    consulta = consulta_vigente(modelo, incluir_embedding=False).join(indice, indice.c.rowid == trechos.c.id)
     consulta = consulta.where(text('rag_busca_textual MATCH :termos')).params(termos=expressao)
     if cursos:
         consulta = consulta.where(versoes.c.curso.in_(cursos) | (versoes.c.curso == ''))
@@ -59,13 +59,15 @@ def buscar(repo, modelo, expressao, k, cursos=()):
 
 
 def migrar_publicados(engine, modelo):
-    """Torne documentos ativos legados pesquisáveis sem chamar embeddings.
+    """Torne documentos ativos legados pesquisáveis no índice textual sem chamar embeddings.
 
     Args:
         engine: Conexão SQLite preparada.
-        modelo (str): Identidade do novo método de recuperação.
+        modelo (str): Identidade do novo método de recuperação textual.
     """
+    if 'fts5' not in modelo.lower():
+        raise ValueError('migrar_publicados só pode migrar versões para um modelo textual FTS5.')
     ativos = select(documentos.c.versao_ativa).where(documentos.c.versao_ativa.is_not(None))
-    with engine.begin() as c:
+    with engine.connect().execution_options(escrita_acervo=True) as c, c.begin():
         c.execute(update(versoes).where(versoes.c.id.in_(ativos),
             versoes.c.modelo_embedding != modelo).values(modelo_embedding=modelo))

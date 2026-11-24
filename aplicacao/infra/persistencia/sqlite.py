@@ -43,6 +43,7 @@ def configurar_conexao(conexao, registro):
         cursor.execute('PRAGMA busy_timeout=10000')
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.execute('PRAGMA journal_mode=WAL')
+        cursor.execute('PRAGMA synchronous=NORMAL')
     finally:
         cursor.close()
 
@@ -96,3 +97,12 @@ def abrir_sqlite(caminho):
     except Exception:
         engine.dispose()
         raise
+
+
+def checkpoint_wal(engine):
+    """Consolide o WAL no arquivo principal ao encerrar, sem propagar falha se ocupado."""
+    try:
+        with engine.connect() as conexao:
+            conexao.exec_driver_sql('PRAGMA wal_checkpoint(TRUNCATE)')
+    except SQLAlchemyError:
+        pass

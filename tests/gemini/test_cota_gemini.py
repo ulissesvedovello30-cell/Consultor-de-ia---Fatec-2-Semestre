@@ -2,6 +2,7 @@
 import json
 import sqlite3
 import unittest
+from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -63,13 +64,13 @@ class Cotas(unittest.TestCase):
                     pass
                 self.assertEqual(len(respostas), 2)
                 pausa.assert_not_called()
-                with sqlite3.connect(banco) as db:
+                with closing(sqlite3.connect(banco)) as db:
                     self.assertEqual(db.execute('select count(*) from rag_lote_inicial').fetchone()[0], 1)
                     self.assertEqual(db.execute('select count(*) from rag_inicializacao').fetchone()[0], 0)
                 with montagem.abrir_chatbot() as (_, base):
                     self.assertEqual(len(base.repositorio.listar()), 5)
                 pausa.assert_called_once_with(9)
-                with sqlite3.connect(banco) as db:
+                with closing(sqlite3.connect(banco)) as db:
                     self.assertEqual(db.execute('select count(*) from rag_lote_inicial').fetchone()[0], 0)
                 n = len(respostas)
                 with montagem.abrir_chatbot(): pass

@@ -1,13 +1,13 @@
 """Tabelas exclusivas do consultor; não acessam cadastro de alunos."""
 from sqlalchemy import (MetaData, Table, Column, String, Text, Integer,
-                        LargeBinary, Date, ForeignKey)
+                        LargeBinary, Date, ForeignKey, Index)
 
 metadata = MetaData()
 documentos = Table(
     'rag_documento', metadata,
     Column('id', String(64), primary_key=True),
     Column('nome', String(255), nullable=False),
-    Column('versao_ativa', String(32)),
+    Column('versao_ativa', String(32), index=True),
 )
 versoes = Table(
     'rag_versao', metadata,
@@ -20,6 +20,7 @@ versoes = Table(
     Column('ano', Integer),
     Column('inicio', Date), Column('fim', Date),
     Column('url_oficial', String(1000), nullable=False, default=''),
+    Index('ix_rag_versao_modelo_vigencia', 'modelo_embedding', 'inicio', 'fim'),
 )
 trechos = Table(
     'rag_trecho', metadata,

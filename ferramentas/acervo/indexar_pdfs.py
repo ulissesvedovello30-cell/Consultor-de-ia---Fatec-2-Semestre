@@ -2,6 +2,7 @@
 import argparse
 import time
 from pathlib import Path
+from fastapi import HTTPException
 import aplicacao.configuracao.parametros as config
 from aplicacao.infra.gemini.gemini_http import ClienteGemini, ErroGemini
 from aplicacao.dominio.erros import ErroBancoDeDados, ErroIndexacao
@@ -30,21 +31,25 @@ def indexar_um(base, caminho, forcar):
 
 
 def main():
-    """Abra banco e API, processe arquivos e sempre feche conexões."""
+    """Abra banco e API quando necessária, processe arquivos e sempre feche conexões."""
     args = argumentos()
-    cliente = ClienteGemini(config.GEMINI_API_KEY)
+    cliente = ClienteGemini(config.GEMINI_API_KEY) if config.BUSCA_ACERVO == 'gemini' else None
     try:
         with banco_aberto() as engine:
             base = criar_base(engine, cliente)
             for caminho in args.arquivos:
                 print(f'{caminho.name}: {indexar_um(base, caminho, args.forcar)} trechos publicados.')
     finally:
-        cliente.fechar()
+        if cliente is not None:
+            cliente.fechar()
 
 
 if __name__ == '__main__':
     try:
         main()
+    except HTTPException as erro:
+        print(f'Falha: {erro.detail}')
+        raise SystemExit(1) from None
     except (ErroBancoDeDados, ErroIndexacao, ErroGemini, ValueError, TimeoutError, NotImplementedError) as erro:
         print(f'Falha: {erro}')
         raise SystemExit(1) from None

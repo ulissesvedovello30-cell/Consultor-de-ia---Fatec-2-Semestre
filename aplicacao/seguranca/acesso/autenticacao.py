@@ -6,6 +6,7 @@ import time
 from aplicacao.seguranca.http.contratos import ArmazemLogin, CredenciaisInvalidas, LoginIndisponivel
 from aplicacao.seguranca.acesso.totp import verificar
 from aplicacao.seguranca.acesso.identidade_admin import normalizar_usuario
+from aplicacao.seguranca.acesso.demonstracao import conferir_codigo
 
 
 class AutenticadorSecretaria:
@@ -47,7 +48,8 @@ class AutenticadorSecretaria:
 
     def _configurado(self):
         """Recuse administração sem senha ou sem TOTP obrigatório no modo oficial."""
-        if not self.config.senha_hash or (self.exigir_2fa and not self.config.totp_segredo):
+        temporal = self.exigir_2fa and not getattr(self.config, 'demonstracao', False)
+        if not self.config.senha_hash or (temporal and not self.config.totp_segredo):
             raise LoginIndisponivel('Configure senha e segundo fator no servidor.')
 
     def _credenciais(self, usuario, senha, otp):
@@ -56,11 +58,13 @@ class AutenticadorSecretaria:
         conta = self._mesma_conta(usuario)
         if not (valida and conta):
             raise CredenciaisInvalidas('Credenciais inválidas.')
-        if self.exigir_2fa or self.config.totp_segredo:
+        if self.exigir_2fa or self.config.totp_segredo or getattr(self.config, 'demonstracao', False):
             self._segundo_fator(otp)
 
     def _segundo_fator(self, otp):
-        """Valide e consuma TOTP, rejeitando repetição de um código já usado."""
+        """Confira o código da apresentação ou valide TOTP com prevenção de repetição."""
+        if getattr(self.config, 'demonstracao', False):
+            return conferir_codigo(self.config, otp)
         passo = verificar(self.config.totp_segredo, otp, self.relogio())
         chave = self._chave('totp', self.config.usuario + self.config.totp_segredo)
         if passo is None or not self.repo.consumir_codigo(chave, passo):

@@ -29,4 +29,6 @@ def assuntos_frequentes(pergunta):
         if not re.search(r'mensalidade|gratuit|gratis', texto):
             assuntos.discard('mensalidade')
         assuntos.discard('horario')
+    if re.search(r'hackathon|aula magna|fatec integra|evento|palestra|workshop|congresso|seminario|forum|prova|exame|recesso|feriado|feira|semana d[ae]', texto):
+        assuntos.discard('horario')
     return assuntos

@@ -24,7 +24,8 @@ async def abrir_sessao(request: Request, response: Response):
         token, sessao = estado.sessoes.criar()
         cookie(response, token, estado.config)
     return {'csrf': sessao.csrf, 'admin': sessao.admin and sessao.admin_fim > estado.sessoes.relogio(),
-            'exige_2fa': estado.modo != 'teste' or bool(estado.config.totp_segredo)}
+            'exige_2fa': estado.modo != 'teste' or bool(estado.config.totp_segredo) or estado.config.demonstracao,
+            'demonstracao': estado.config.demonstracao}
 
 
 @router.post('/api/admin/login')

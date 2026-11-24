@@ -118,5 +118,5 @@ def carregar_ngrok():
     try:
         from pyngrok import ngrok, conf, exception
     except ImportError:
-        raise RuntimeError('Instale requirements-ngrok.txt para usar o túnel.') from None
+        raise RuntimeError('Instale dependencias/tunel.txt para usar o túnel.') from None
     return ngrok, conf, exception.PyngrokError

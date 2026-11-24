@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 from pathlib import Path
 from aplicacao.seguranca.acesso.totp import chave_binaria
+from aplicacao.seguranca.acesso.demonstracao import validar_demonstracao
 import aplicacao.configuracao.parametros as config
 
 
@@ -17,6 +18,8 @@ class ConfigWeb:
     ttl: int = 3600
     max_upload: int = 25 * 1024 * 1024
     prazo: float = 120
+    demonstracao: bool = False
+    codigo_demonstracao: str = field(default='', repr=False)
 
     def __post_init__(self):
         """Valide a configuração construída e lance ValueError se os parâmetros forem inválidos."""
@@ -37,11 +40,13 @@ class ConfigWeb:
     @classmethod
     def ambiente(cls):
         """Construa configuração web a partir das variáveis do ambiente."""
-        return cls(origem=os.getenv('APP_ORIGIN', cls.origem).rstrip('/'),
-                   usuario=os.getenv('ADMIN_USUARIO', 'admin'),
+        return cls(origem=(os.getenv('APP_ORIGIN') or '').strip().rstrip('/') or cls.origem,
+                   usuario=(os.getenv('ADMIN_USUARIO') or '').strip() or 'admin',
                    senha_hash=os.getenv('ADMIN_SENHA_HASH', ''),
                    prazo=config.RAG_TEMPO_GERACAO, totp_segredo=os.getenv('ADMIN_TOTP_SECRET', ''),
-                   seguranca_db=os.getenv('SEGURANCA_DB', cls.seguranca_db))
+                   demonstracao=os.getenv('ADMIN_DEMONSTRACAO', 'false').strip().lower() == 'true',
+                   codigo_demonstracao=os.getenv('ADMIN_CODIGO_DEMONSTRACAO', ''),
+                   seguranca_db=(os.getenv('SEGURANCA_DB') or '').strip() or cls.seguranca_db)
 
 
 def validar_parametros(config):
@@ -50,3 +55,4 @@ def validar_parametros(config):
         raise ValueError('Prazos devem ser positivos.')
     if config.totp_segredo:
         chave_binaria(config.totp_segredo)
+    validar_demonstracao(config)

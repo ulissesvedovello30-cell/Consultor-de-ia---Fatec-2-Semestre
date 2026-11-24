@@ -120,12 +120,20 @@ class Chatbot:
         """Preserve pergunta atual e acrescente referência anterior limitada quando necessária."""
         self.expirar()
         anterior = self._ultima_pergunta.get(conversa_id)
-        resolvida = resolver_referencia(texto, anterior[1]) if anterior else None
+        cursos = self._cursos_ativos()
+        resolvida = resolver_referencia(texto, anterior[1], cursos) if anterior else None
         if resolvida is not None:
             return resolvida
         if anterior and self._REFERE_ANTERIOR.search(texto):
-            return f'Pergunta atual: {texto}\nPergunta anterior (referência): {anterior[1][:500]}'
+            referencia = anterior[1].splitlines()[0].removeprefix('Pergunta atual: ')
+            return f'Pergunta atual: {texto}\nPergunta anterior (referência): {referencia[:500]}'
         return texto
+
+    def _cursos_ativos(self):
+        """Leia os cursos atualmente carregados no acervo, quando disponíveis."""
+        base = getattr(self._consultor, '_base', None)
+        trechos = getattr(base, '_textos', None) or (getattr(base, '_indice', ([],))[0] if base else ())
+        return {t.curso for t in trechos if getattr(t, 'curso', '')}
 
     def limpar(self, conversa_id):
         """Remova o contexto temporário da conversa solicitante."""

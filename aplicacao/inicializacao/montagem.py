@@ -47,11 +47,13 @@ def abrir_chatbot():
 
 @contextmanager
 def banco_aberto():
-    """Disponibilize engine persistente com fechamento garantido, inclusive em erro."""
+    """Disponibilize engine persistente com checkpoint e fechamento garantido, inclusive em erro."""
+    from aplicacao.infra.persistencia.sqlite import checkpoint_wal
     engine = criar_engine(config.PERFIL, config.SQLITE_CAMINHO)
     try:
         yield engine
     finally:
+        checkpoint_wal(engine)
         engine.dispose()
 
 

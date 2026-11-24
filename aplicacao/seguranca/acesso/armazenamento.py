@@ -51,9 +51,12 @@ class RepositorioLoginSQLite:
                 banco.close()
 
     def segredo(self):
-        """Retorne o segredo de HMAC mantido somente no armazenamento local."""
-        with self.transacao() as banco:
-            return banco.execute('SELECT valor FROM segredo WHERE id=1').fetchone()[0]
+        """Retorne o segredo de HMAC mantido somente no armazenamento local sem lock de escrita."""
+        try:
+            with closing(sqlite3.connect(self.caminho, timeout=2, isolation_level=None)) as banco:
+                return banco.execute('SELECT valor FROM segredo WHERE id=1').fetchone()[0]
+        except (sqlite3.Error, TypeError):
+            raise FalhaSeguranca('Proteção do login indisponível.') from None
 
     def reservar(self, chaves, agora):
         """Reserve cotas por IP, conta e serviço; falhas não prolongam o bloqueio."""

@@ -87,6 +87,6 @@ def validar_perfil(perfil):
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, ErroBancoDeDados, NotImplementedError) as erro:
+    except (ValueError, ErroBancoDeDados, NotImplementedError, RuntimeError) as erro:
         print(str(erro))
         raise SystemExit(1) from None

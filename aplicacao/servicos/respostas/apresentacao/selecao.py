@@ -16,7 +16,9 @@ def completar_referencias(referencias, usados):
     """
     grupos = {usados[i - 1].grupo_resposta for i in referencias if usados[i - 1].grupo_resposta}
     complementos = [i for i, t in enumerate(usados, 1) if t.grupo_resposta and t.grupo_resposta in grupos]
-    completos = sorted(set(referencias) | set(complementos))
+    unicos = list(dict.fromkeys(referencias))
+    completos = sorted(set(unicos) | set(complementos))
     if len(completos) > 5:
-        raise ValueError('Delimite o período ou os cursos para consultar menos evidências.')
+        extras = [i for i in complementos if i not in unicos]
+        completos = sorted(unicos + extras[:max(0, 5 - len(unicos))])
     return completos

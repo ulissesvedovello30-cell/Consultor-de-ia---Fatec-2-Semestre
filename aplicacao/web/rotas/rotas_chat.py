@@ -33,8 +33,10 @@ async def perguntar(dados: Pergunta, request: Request, sessao=Depends(proteger_e
         Resposta HTTP com texto, fontes e estado.
     """
     estado = request.app.state
+    if sessao.ocupada:
+        raise HTTPException(429, 'Atendimento ocupado. Tente novamente em instantes.')
     limitar(request, 'chat', estado.limite_chat)
-    if not estado.limite_global.permitir('global') or sessao.ocupada:
+    if not estado.limite_global.permitir('global'):
         raise HTTPException(429, 'Atendimento ocupado. Tente novamente em instantes.')
     sessao.ocupada = True
     try:

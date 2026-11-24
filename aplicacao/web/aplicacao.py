@@ -137,13 +137,18 @@ async def erro_inesperado(request: Request, erro):
 
 
 async def expirar_estado(estado):
-    """Remova contexto, sessões e limites vencidos a cada 30 segundos."""
+    """Remova contexto, sessões e limites vencidos a cada 30 segundos sem morrer em erro transitório."""
     while True:
         await asyncio.sleep(30)
-        estado.chatbot.expirar()
-        estado.sessoes.obter(None)
-        expirar_limites(estado)
-        await limpar_seguranca(estado)
+        try:
+            estado.chatbot.expirar()
+            estado.sessoes.obter(None)
+            expirar_limites(estado)
+            await limpar_seguranca(estado)
+        except asyncio.CancelledError:
+            raise
+        except Exception as erro:
+            logger.warning('Falha na limpeza periódica: %s', type(erro).__name__)
 
 
 async def erro_provedor(request: Request, erro):

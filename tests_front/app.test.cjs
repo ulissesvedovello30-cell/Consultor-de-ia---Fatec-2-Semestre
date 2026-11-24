@@ -19,6 +19,7 @@ w.fetch = async (url, options = {}) => {
   if (cookie) headers.Cookie = cookie;
   let body = options.body;
   if (body instanceof w.File) {
+    if (body.type) headers['Content-Type'] = body.type;
     body = await new Promise((resolve, reject) => {
       const reader = new w.FileReader();
       reader.onload = () => resolve(Buffer.from(reader.result));
@@ -55,6 +56,7 @@ function testOtp() {
 }
 async function run() {
   await ponte.pronta;
+  w.eval(fs.readFileSync(path.join(staticDir, 'uploads.js'), 'utf8'));
   w.eval(fs.readFileSync(path.join(staticDir, 'app.js'), 'utf8') + '\nObject.assign(window, {show, send, clearChat, login, uploadOne, listDocuments, request, removeDocument, message, forget});');
   await ready();
   assert.equal(w.document.querySelectorAll('input[type=password]').length, 1);
@@ -69,10 +71,13 @@ async function run() {
   assert.equal(w.document.querySelectorAll('.message').length, 0);
   console.log('OK: limpeza no frontend e backend');
   await w.show('admin');
-  w.document.getElementById('username').value = 'secretaria.teste@gmail.com';
-  w.document.getElementById('password').value = 'senha-teste-interface-123';
-  assert.equal(w.document.getElementById('otp-label').hidden, !process.env.TESTE_TOTP);
-  if (process.env.TESTE_TOTP) w.document.getElementById('otp').value = testOtp();
+  const demonstracao = !!process.env.TESTE_ADMIN_DEMO;
+  w.document.getElementById('username').value = demonstracao ? 'admin' : 'secretaria.teste@gmail.com';
+  w.document.getElementById('password').value = demonstracao ? 'admin' : 'senha-teste-interface-123';
+  assert.equal(w.document.getElementById('otp-label').hidden, !(process.env.TESTE_TOTP || demonstracao));
+  assert.equal(w.document.getElementById('demo-credentials').hidden, !demonstracao);
+  if (demonstracao) w.document.getElementById('otp').value = '123456';
+  else if (process.env.TESTE_TOTP) w.document.getElementById('otp').value = testOtp();
   const button = w.document.querySelector('#login-form button');
   await w.login({preventDefault(){}, submitter:button});
   assert.equal(w.document.getElementById('admin-panel').hidden, false);
@@ -88,6 +93,7 @@ async function run() {
   await w.removeDocument(doc, w.document.createElement('button'));
   assert.ok(!w.document.getElementById('documents').textContent.includes('teste-interface.txt'));
   console.log('OK: exclusão real');
+  await require('./publicacao.cjs').testarPublicacao(w);
   w.message('bot', '<img src=x onerror=alert(1)>', [{arquivo:'<script>x</script>',url:'javascript:alert(1)'}]);
   assert.equal(w.document.querySelectorAll('#messages img, #messages script').length,0);
   assert.equal(w.document.querySelectorAll('#messages a').length,0);

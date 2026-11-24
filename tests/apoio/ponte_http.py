@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from fastapi.testclient import TestClient
@@ -52,6 +53,8 @@ def iniciar_ponte(pasta):
     config = ConfigWeb(origem=origem, usuario='secretaria.teste@gmail.com',
         senha_hash=gerar_hash('senha-teste-interface-123'), totp_segredo=os.getenv('TESTE_TOTP', ''),
         seguranca_db=str(Path(pasta) / 'seguranca.db'))
+    if os.getenv('TESTE_ADMIN_DEMO'):
+        config = replace(ConfigWeb.ambiente(), origem=origem, seguranca_db=str(Path(pasta) / 'seguranca.db'))
     with TestClient(criar_app(fabrica, config, 'teste'), base_url=origem) as cliente:
         executar_pedidos(cliente)
 

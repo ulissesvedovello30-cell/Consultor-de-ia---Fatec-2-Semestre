@@ -21,16 +21,16 @@ Essa separação aplica responsabilidade única e inversão de dependência ao l
 
 ## Login da secretaria
 
-- Senha com scrypt, sem senha padrão e sem credencial de visitante.
-- No **MVP**, senha e **TOTP de seis dígitos** são obrigatórios. Sem configuração completa, a rota recusa autenticação com 503. Não há opção de execução que dispense o segundo fator.
+- Senha com scrypt. O pacote de apresentação traz `admin` / `admin`, habilitado explicitamente como demonstração local; visitantes continuam sem cadastro.
+- No modo normal, senha e **TOTP de seis dígitos** são obrigatórios. Sem configuração completa, a rota recusa autenticação com 503. Na apresentação local, `ADMIN_DEMONSTRACAO=true` substitui o TOTP pelo código fixo configurado em `ADMIN_CODIGO_DEMONSTRACAO` (`123456` neste pacote). Esse código não constitui um segundo fator real. Uma origem pública é recusada enquanto a demonstração estiver ativa.
 - Limites simultâneos: **5 tentativas por IP/minuto**, **10 por conta declarada/15 minutos**, **30 globais/minuto**. Incluem tentativas bem-sucedidas. Uma requisição bloqueada não prolonga automaticamente sua janela.
 - As reservas são transacionais e persistem em `runtime/seguranca.sqlite3`, inclusive após reiniciar. IP e conta são armazenados somente como HMAC com segredo aleatório local estável. HMAC é pseudonimização.
 - Há no máximo duas verificações de senha simultâneas, sem fila adicional no serviço de autenticação.
-- TOTP aceita o passo atual e ±30 segundos. Depois de usado, o passo não pode autenticar de novo, inclusive após reinício. Aguarde o próximo código para outro login.
+- No modo normal, TOTP aceita o passo atual e ±30 segundos. Depois de usado, o passo não pode autenticar de novo, inclusive após reinício. Aguarde o próximo código para outro login.
 - Usuário, senha e TOTP incorretos recebem a mesma mensagem. Erro no armazenamento recusa login, em vez de remover a proteção.
 - Após autenticar, o cookie e CSRF são rotacionados; sessão administrativa dura 30 minutos. Cookies são HttpOnly, SameSite=Strict e Secure em HTTPS.
 
-Para configurar, no ambiente virtual:
+Para configurar o acesso normal, defina `ADMIN_DEMONSTRACAO=false` no `.env` e, no ambiente virtual:
 
 ```text
 python -m ferramentas.administracao.preparar_admin
@@ -79,7 +79,7 @@ Os filtros de prompt injection e dados pessoais, instrução de sistema e valida
 
 ## Publicar com Nginx
 
-1. Configure SQLite, Gemini, senha, TOTP e contato de privacidade conforme `README.md`.
+1. Desative a demonstração local e configure SQLite, Gemini, senha, TOTP e contato de privacidade conforme `README.md`.
 2. Use `APP_ORIGIN=https://seu-dominio`, `APP_PORT=8000` e `TRUSTED_PROXIES=127.0.0.1`. O Python continua restrito a `127.0.0.1`.
 3. Adapte `deploy/nginx.conf.example`: domínio, caminhos de certificado TLS e caminhos de includes. É um exemplo completo, não sobrescreva a configuração existente de outros sites sem integrá-la.
 4. Instale/adapte `deploy/admin-allowlist.conf.example` no caminho indicado. Libere o IP de saída real da secretaria ou da VPN. O padrão nega administração externa, deliberadamente. O chat permanece público.

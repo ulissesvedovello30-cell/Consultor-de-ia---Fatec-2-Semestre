@@ -25,17 +25,19 @@ def assunto_curso(pergunta):
     return next(iter(assuntos)) if len(assuntos) == 1 else ''
 
 
-def consulta_coletiva(pergunta):
+def consulta_coletiva(pergunta, cursos=None):
     """Identifique pedidos que abrangem mais de um curso.
 
     Args:
         pergunta (str): Pergunta original ou resolvida pelo contexto da conversa.
+        cursos (set[str] | None): Cursos disponíveis no conjunto consultado.
 
     Returns:
         bool: Indica uma consulta coletiva explícita.
     """
     from aplicacao.servicos.recuperacao.filtros_acervo import mencionados
-    return bool(pedido_coletivo(pergunta) or (assunto_curso(pergunta) and not mencionados(pergunta, {'IA', 'ESG'})))
+    conhecidos = set(cursos or ()) | {'IA', 'ESG'}
+    return bool(pedido_coletivo(pergunta) or (assunto_curso(pergunta) and not mencionados(pergunta, conhecidos)))
 
 
 def pedido_coletivo(pergunta):

@@ -82,16 +82,38 @@ A data de uma prova específica só pode ser respondida se estiver em um documen
 
 ## Administração
 
-O login usa `ADMIN_USUARIO`, `ADMIN_SENHA_HASH` e `ADMIN_TOTP_SECRET` (segundo fator obrigatório no MVP). São credenciais próprias do projeto. Usar um endereço Gmail como usuário não significa entrar com a senha da conta Google.
+O acesso para a apresentação já está configurado no `.env`. Execute o `main.py`, abra **http://127.0.0.1:8000** e clique em **Administração**.
 
-Para preparar as credenciais depois de rodar o `main.py`, use o Python da venv no terminal da raiz:
+| Campo | Valor |
+| --- | --- |
+| Usuário | `admin` |
+| Senha | `admin` |
+| Código de demonstração | `123456` |
+
+Depois de entrar, o painel de documentos aparece na mesma página. Para publicar:
+
+1. Arraste um ou mais PDFs para a área indicada ou use **Selecionar arquivos**.
+2. Confira os nomes na fila. Você pode remover um arquivo antes de enviar.
+3. Se necessário, preencha curso, turma e validade em **Curso e validade do documento**. Esses campos são opcionais.
+4. Confirme que revisou os arquivos para publicação pública e clique em **Publicar no acervo**.
+5. Aguarde a mensagem **Disponível no chatbot**. O documento aparecerá na lista ao lado. Abra **Conversar** e pergunte sobre o conteúdo publicado.
+
+O PDF passa pelo mesmo processamento dos documentos iniciais: validação, extração de texto, divisão em trechos e gravação no SQLite. Depois da confirmação, a busca já consulta o conteúdo novo, sem reiniciar. As publicações continuam disponíveis quando o programa é iniciado novamente. Selecionar ou arrastar apenas prepara a fila; a publicação acontece ao confirmar o envio.
+
+Cada arquivo pode ter até 25 MB. PDFs precisam ter texto selecionável; um PDF somente com imagens precisa passar por OCR antes do envio. O painel também mantém o suporte a DOCX e TXT. Um arquivo com o mesmo nome substitui a versão publicada. Se o processamento falhar, a versão anterior continua disponível e a tela informa o erro. A exclusão retira o texto do acervo e atualiza a busca.
+
+### Acesso de demonstração e modo normal
+
+`ADMIN_DEMONSTRACAO=true` habilita o código fixo `123456` para a apresentação local. Esse código pode ser reutilizado e não é um segundo fator real. A senha continua armazenada como hash scrypt. As verificações de sessão, CSRF, limite de tentativas e validação dos arquivos permanecem ativas.
+
+Para acesso remoto, desative a demonstração com `ADMIN_DEMONSTRACAO=false`, configure uma senha própria e o autenticador TOTP, e reinicie o servidor. O modo de demonstração aceita somente uma origem local. As ferramentas de configuração podem ser chamadas pelo Python da venv:
 
 ```powershell
 .venv\Scripts\python.exe -m ferramentas.administracao.preparar_admin
 .venv\Scripts\python.exe -m ferramentas.administracao.configurar_2fa
 ```
 
-No Linux e macOS, substitua `.venv\Scripts\python.exe` por `.venv/bin/python`. As ferramentas perguntam os dados necessários. O painel aceita PDF, DOCX e TXT públicos, com validação de conteúdo e limites de tamanho. O modo de acesso remoto por túnel exige a configuração de segurança prevista no projeto.
+No Linux e macOS, substitua `.venv\Scripts\python.exe` por `.venv/bin/python`. São credenciais próprias do projeto; usar um endereço Gmail como usuário não significa entrar com a senha da conta Google. No modo normal, o código vem do autenticador e não pode ser reutilizado depois de aceito.
 
 ## Organização
 

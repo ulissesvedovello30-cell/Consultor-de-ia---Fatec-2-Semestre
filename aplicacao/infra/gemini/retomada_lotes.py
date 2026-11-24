@@ -42,7 +42,7 @@ def ler(engine, chave, linhas):
 def salvar(engine, chave, matriz):
     """Grave um lote concluído antes de pedir o próximo ao provedor."""
     dados = np.asarray(matriz, dtype='<f4').tobytes()
-    with engine.begin() as conexao:
+    with engine.connect().execution_options(escrita_acervo=True) as conexao, conexao.begin():
         conexao.execute(insert(lotes).values(hash=chave, vetores=dados)
                         .on_conflict_do_update(index_elements=[lotes.c.hash], set_={'vetores': dados}))
 

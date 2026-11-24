@@ -187,8 +187,8 @@ class EmbeddingsGemini:
 
 
 def juntar_partes(partes):
-    """Retorne só o texto final, excluindo blocos marcados como pensamento."""
-    return ''.join(p['text'] for p in partes if not p.get('thought', False))
+    """Retorne só o texto final, excluindo blocos marcados como pensamento ou sem texto."""
+    return ''.join(p.get('text', '') for p in partes if isinstance(p, dict) and not p.get('thought', False))
 
 
 def payload_embedding(modelo, texto, tarefa):

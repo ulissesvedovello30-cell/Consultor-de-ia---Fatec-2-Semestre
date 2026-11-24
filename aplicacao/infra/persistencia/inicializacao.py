@@ -8,7 +8,7 @@ CHAVE = 'acervo_inicial'
 
 
 def preparar_esquema(engine):
-    """Crie tabelas ausentes sem recriar ou apagar as existentes.
+    """Crie tabelas e índices ausentes sem recriar ou apagar os existentes.
 
     Args:
         engine: Engine com suporte à opção escrita_acervo.
@@ -20,6 +20,12 @@ def preparar_esquema(engine):
         with engine.connect().execution_options(escrita_acervo=True) as conexao:
             with conexao.begin():
                 metadata.create_all(conexao, checkfirst=True)
+                conexao.exec_driver_sql(
+                    'CREATE INDEX IF NOT EXISTS ix_rag_documento_versao_ativa ON rag_documento (versao_ativa)'
+                )
+                conexao.exec_driver_sql(
+                    'CREATE INDEX IF NOT EXISTS ix_rag_versao_modelo_vigencia ON rag_versao (modelo_embedding, inicio, fim)'
+                )
     except SQLAlchemyError:
         raise ErroBancoDeDados('Não foi possível preparar o esquema do acervo.') from None
 

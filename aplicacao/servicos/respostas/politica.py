@@ -5,7 +5,10 @@ from aplicacao.servicos.recuperacao.filtros_acervo import normalizar, expandir_c
 PESSOAIS = re.compile(
     r'\b\d{3}[. ]?\d{3}[. ]?\d{3}[- ]?\d{2}\b|'
     r'\b[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}\b|'
-    r'(?<!\d)(?:\+55\s*)?\(?\d{2}\)?[ -]?9?\d{4}[ -]?\d{4}(?!\d)|'
+    r'(?<!\d)(?:\+55\s*(?:\(?\d{2}\)?[ -]?)?9?\d{4}[ -]?\d{4}|'
+    r'\(\d{2}\)[ -]?9?\d{4}[ -]?\d{4}|'
+    r'[1-9]\d[ -]9?\d{4}[ -]\d{4}|'
+    r'[1-9]\d9\d{8})(?!\d)|'
     r'\b(?:cpf|rg|ra|senha|password|prontuario)\s*[:=]\s*\S+', re.I)
 INJECAO = re.compile(
     r'(ignore|disregard|esqueca|desconsidere).{0,80}(instru|prompt|regras|previous|system)|'
@@ -18,7 +21,11 @@ ESCOPO = re.compile(
     r'calendario|prova\w*|aula\w*|curso\w*|turma\w*|semestre\w*|periodo|'
     r'prazo|integraliza\w*|modalidade|dura(?:r|m)?|conclusao|'
     r'mensalidade|gratuit\w*|duracao|presencia\w*|ia|esg|biblioteca|estagio|tcc|documento\w*|declaracao|edital|vestibular|'
-    r'evento\w*|feira|horario|sala\w*|professor\w*|disciplina\w*|ferias|'
+    r'evento\w*|feira|horari[oa]s?|carga|sala\w*|professor\w*|disciplina\w*|ferias|'
+    r'transferencia\w*|trancamento\w*|frequencia\w*|aproveitamento|monitoria|iniciacao|cientifica|extensao|pesquisa|'
+    r'diploma\w*|certificado\w*|historico|atestado\w*|carteirinha|nota\w*|media\w*|aprovacao|reprovacao|faltas?|'
+    r'dependencia|regimento|regulamento|ppc|coordenacao|coordenador\w*|diretoria|cantina|estacionamento|'
+    r'endereco|localizacao|campus|laboratorio\w*|bolsa\w*|auxilio\w*|intercambio|'
     r'enrollment|exam\w*|class\w*|calendar|library|college|internship|'
     r'isso|disso|esse|essa|quando|onde|when|where)\b', re.I)
 

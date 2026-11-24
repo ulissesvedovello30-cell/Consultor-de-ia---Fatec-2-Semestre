@@ -12,7 +12,27 @@ VOCABULARIO = frozenset(('mensalidade mensalidades gratuito gratuitos gratuita g
     'secretaria biblioteca matricula prova exame custo custa custos quanto quais quando '
     'periodo prazo taxa taxas pagamento pagar isencao desconto professor professores '
     'gratuidade mensal noturno matutino vespertino horaria horarias quantos quantas').split())
-PROTEGIDAS = VOCABULARIO | IGNORADAS | EQUIVALENTES.keys()
+PALAVRAS_COMUNS = frozenset((
+    'grande grandes pegar prato pratos provar justo justa justos justas susto sustos '
+    'pagas tacas busto curto curta cursa marca marco carta parte porta conta ponto '
+    'mundo festa causa pausa carga datas notas media tempo local valor feira manha '
+    'tarde noite matutina noturna vespertina exames aulas provas horas vagas turma '
+    'turmas atual anual total final geral legal igual papel setor maior menor melhor '
+    'autor fator motor reitor diretor trova brava crava grava trava canto campo banco '
+    'plano bloco livro texto lista possa posso passo passa pensa pesar falar olhar '
+    'andar entrar sair levar trazer fazer saber poder querer dever haver estar ficar '
+    'deixar passar chegar voltar seguir pedir enviar mandar receber abrir fechar mudar '
+    'trocar tirar gerar criar tomar ganhar perder achar viver morar trabalhar formar '
+    'concluir terminar comecar iniciar acabar funcionar acontecer existir oferecer '
+    'precisar conseguir informar explicar ajudar consultar acessar emitir solicitar '
+    'entregar realizar participar apresentar comprovante declaracao historico diploma '
+    'certificado carteira carteirinha trancamento transferencia aproveitamento '
+    'frequencia aprovacao reprovacao monitoria iniciacao cientifica extensao pesquisa '
+    'cantina estacionamento endereco localizacao campus unidade laboratorio bolsas '
+    'auxilio intercambio regimento regulamento coordenacao coordenador diretoria '
+    'faltas media notas dependencia'
+).split())
+PROTEGIDAS = VOCABULARIO | IGNORADAS | EQUIVALENTES.keys() | PALAVRAS_COMUNS
 ABREVIACOES = {'q': 'que', 'oq': 'o que', 'qto': 'quanto', 'qnt': 'quanto',
                'qnts': 'quantos', 'qnd': 'quando', 'vc': 'voce', 'vcs': 'voces', 'eh': 'e'}
 

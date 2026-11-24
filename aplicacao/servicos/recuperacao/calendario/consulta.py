@@ -25,14 +25,26 @@ def buscar_eventos(pergunta, textos, k):
         k (int): Limite de evidências.
 
     Returns:
-        list | None: Fatos compatíveis ou None quando a intenção não é temporal.
+        list | None: Fatos compatíveis, vazio para recorte temporal ausente ou None para busca geral.
     """
     pergunta = normalizar(pergunta)
     if not CALENDARIO.search(pergunta):
         return None
     eventos = filtrar_eventos(pergunta, [t for t in textos if DATADO.match(t.texto)])
     selecionados = selecionar(pergunta, priorizar_atualizacoes(filtrar_assunto(pergunta, eventos)), k)
+    if not selecionados and not recorte_exclusivo_calendario(pergunta):
+        return None
     return completar_recessos(pergunta, selecionados, textos, k)
+
+
+def recorte_exclusivo_calendario(pergunta):
+    """Mantenha resposta vazia apenas quando a consulta restringe o calendário por data ou categoria fechada."""
+    from aplicacao.servicos.extracao.calendario import MESES
+    if re.search(r'\b20\d{2}\b|ferias|recesso|receso|descanso|feriado|vestibular', pergunta):
+        return True
+    if re.search(r'quais?.*(?:evento|calendario)|evento.*calendario', pergunta):
+        return True
+    return any(re.search(r'\b' + normalizar(m) + r'\b', pergunta) for m in MESES)
 
 
 def filtrar_assunto(pergunta, eventos):

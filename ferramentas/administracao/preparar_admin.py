@@ -1,5 +1,5 @@
-from aplicacao.configuracao.caminhos import RAIZ
 """Configure uma conta administrativa local identificada por e-mail."""
+from aplicacao.configuracao.caminhos import RAIZ
 from getpass import getpass
 from pathlib import Path
 from dotenv import set_key
@@ -29,7 +29,7 @@ def main():
     usuario = validar_email(input('E-mail do administrador (pode ser seu Gmail de teste): '))
     salvar(usuario, gerar_hash(ler_senha()))
     print('Administrador configurado. Reinicie o servidor para aplicar.')
-    print('Configure também o autenticador obrigatório: python configurar_2fa.py')
+    print('Configure também o autenticador obrigatório: python -m ferramentas.administracao.configurar_2fa')
 
 
 def salvar(usuario, hash_senha):

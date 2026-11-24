@@ -17,8 +17,38 @@ def chave(pergunta):
     return ' '.join(re.findall(r'\w+', normalizar(pergunta)))
 
 
+ASSUNTOS_RESERVADOS = frozenset((
+    'catalogo', 'mensalidade', 'horario', 'modalidade',
+    'periodicidade_vestibular', 'grade', 'duracao', 'nivel',
+))
+
+
+def assunto_do_bloco(trecho):
+    """Extraia o marcador Assunto de um bloco da FAQ, ou vazio quando ausente."""
+    achado = re.search(r'^Assunto:\s*(.+)$', trecho.texto, re.M)
+    return achado.group(1).strip() if achado else ''
+
+
+def eh_faq_customizada(trecho):
+    """Indique se o trecho pertence à FAQ com um assunto livre adicionado pela secretaria."""
+    if trecho.arquivo != 'FAQ_secretaria.txt':
+        return False
+    assunto = assunto_do_bloco(trecho)
+    if assunto in ASSUNTOS_RESERVADOS:
+        return False
+    return 'Resposta:' in trecho.texto or (not assunto and 'Pergunta:' in trecho.texto)
+
+
+def recortar_faq_customizada(trecho):
+    """Remova marcadores internos Assunto/Pergunta/Resposta de blocos customizados da FAQ."""
+    if trecho.arquivo != 'FAQ_secretaria.txt' or 'Resposta:' not in trecho.texto:
+        return trecho
+    resposta = trecho.texto.partition('Resposta:')[2].strip()
+    return replace(trecho, texto=resposta) if resposta else trecho
+
+
 def pergunta_do_trecho(trecho):
-    """Extraia a pergunta de um bloco completo da FAQ.
+    """Extraia a pergunta de um bloco da FAQ fora dos assuntos já controlados por regras.
 
     Args:
         trecho: Trecho recuperado do acervo ativo.
@@ -26,13 +56,10 @@ def pergunta_do_trecho(trecho):
     Returns:
         str: Pergunta normalizada ou string vazia para outros documentos.
     """
-    try:
-        (True,).index(trecho.arquivo == 'FAQ_secretaria.txt')
-        (False,).index('Assunto:' in trecho.texto)
-        texto = re.search(r'^-?\s*Pergunta: (.+)', trecho.texto).group(1)
-    except (ValueError, AttributeError):
+    if not eh_faq_customizada(trecho):
         return ''
-    return chave(texto)
+    achado = re.search(r'^-?\s*Pergunta:\s*(.+)', trecho.texto, re.M)
+    return chave(achado.group(1)) if achado else ''
 
 
 def localizar(pergunta, trechos):
@@ -46,11 +73,10 @@ def localizar(pergunta, trechos):
         list: Trechos coincidentes, com pontuação exata.
     """
     consulta = chave(pergunta)
-    try:
-        (True,).index(bool(consulta))
-    except ValueError:
+    if not consulta:
         return []
-    exatos = [replace(t, similaridade=1.0) for t in trechos if pergunta_do_trecho(t) == consulta]
+    exatos = [recortar_faq_customizada(replace(t, similaridade=1.0))
+              for t in trechos if pergunta_do_trecho(t) == consulta]
     return exatos or localizar_equivalentes(pergunta, trechos)
 
 
@@ -67,7 +93,7 @@ def localizar_equivalentes(pergunta, trechos):
     consulta = assunto_faq(pergunta)
     if not consulta:
         return []
-    return [replace(t, similaridade=1.0) for t in trechos
+    return [recortar_faq_customizada(replace(t, similaridade=1.0)) for t in trechos
             if (cadastrada := pergunta_do_trecho(t)) and consulta <= assunto_faq(cadastrada)]
 
 

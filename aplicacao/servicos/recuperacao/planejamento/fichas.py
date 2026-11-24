@@ -24,8 +24,10 @@ def buscar_fichas(pergunta, textos, k):
     assunto = assunto_curso(pergunta)
     if assunto not in CAMPOS:
         return None
-    cursos = mencionados(pergunta, {t.curso for t in textos if t.curso})
-    if not cursos and re.search(r'\bcurso (?:de|em) \w+', normalizar(pergunta)):
+    cursos_ativos = {t.curso for t in textos if t.curso}
+    cursos = mencionados(pergunta, cursos_ativos)
+    from aplicacao.servicos.recuperacao.perguntas.consulta import curso_desconhecido
+    if not cursos and curso_desconhecido(pergunta, cursos_ativos):
         return None
     elegiveis = [t for t in textos if t.curso and (not cursos or t.curso in cursos)]
     fichas = [recortar_ficha(t, assunto) for t in elegiveis]

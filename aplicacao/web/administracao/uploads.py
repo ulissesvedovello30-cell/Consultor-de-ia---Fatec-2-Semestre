@@ -38,8 +38,11 @@ async def salvar_stream(request, destino, limite):
 
 def validar_conteudo(caminho):
     """Verifique assinatura PDF, estrutura DOCX ou ausência de bytes binários no TXT."""
-    if caminho.suffix.lower() == '.pdf' and not caminho.read_bytes()[:1024].lstrip().startswith(b'%PDF-'):
-        raise ErroIndexacao('O arquivo não contém um PDF válido.')
+    if caminho.suffix.lower() == '.pdf':
+        with caminho.open('rb') as arquivo:
+            cabecalho = arquivo.read(1024)
+        if not cabecalho.lstrip().startswith(b'%PDF-'):
+            raise ErroIndexacao('O arquivo não contém um PDF válido.')
     if caminho.suffix.lower() == '.docx':
         validar_docx(caminho)
     if caminho.suffix.lower() == '.txt' and b'\x00' in caminho.read_bytes():
@@ -64,13 +67,32 @@ async def receber_upload(request, nome, metadados):
     estado = request.app.state
     if not estado.upload_vaga.acquire(blocking=False):
         raise HTTPException(503, 'Outro documento está sendo processado.')
-    pasta = Path(tempfile.mkdtemp(prefix='consultor-upload-'))
+    pasta = criar_pasta(estado)
     try:
         await salvar_stream(request, pasta / nome, estado.config.max_upload)
     except BaseException:
         finalizar_upload(estado, pasta)
         raise
     return await processar_em_thread(estado, pasta, nome, metadados)
+
+
+def criar_pasta(estado):
+    """Libere a vaga se não for possível preparar o recebimento do arquivo.
+
+    Args:
+        estado: Estado da aplicação com o controle de uploads.
+
+    Returns:
+        Path: Pasta temporária exclusiva.
+
+    Raises:
+        HTTPException: Se o armazenamento temporário estiver indisponível.
+    """
+    try:
+        return Path(tempfile.mkdtemp(prefix='consultor-upload-'))
+    except OSError:
+        estado.upload_vaga.release()
+        raise HTTPException(503, 'Não foi possível preparar o envio. Tente novamente.') from None
 
 
 def indexar_upload(estado, pasta, nome, metadados):

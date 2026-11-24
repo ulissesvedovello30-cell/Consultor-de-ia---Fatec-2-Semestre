@@ -40,7 +40,7 @@ PROMPT = (
     'Preserve a palavra previsão quando a data estiver prevista e não confirmada. '
     'Não complete com conhecimento externo. Não una calendários diferentes nem decida conflitos. '
     'Retorne SOMENTE JSON: {"status":"respondida","trechos":[1]}. '
-    'Escolha no máximo 5 trechos, com 1200 caracteres cada e 2400 caracteres de texto no total. '
+    'Escolha no máximo 5 trechos, com 1200 caracteres cada e 5500 caracteres de texto no total. '
     'Sem evidência suficiente, fora do escopo ou com conflito: '
     '{"status":"insuficiente","trechos":[]}.'
 )
@@ -121,18 +121,31 @@ class ConsultorRAG:
         self._cache.expirar()
 
     def _relevantes(self, trechos):
-        """Filtre similaridade e bloqueie conteúdo suspeito antes da geração."""
-        from aplicacao.servicos.respostas.politica import validar_publico
-        relevantes = [t for t in trechos if t.similaridade >= self._limiar]
-        for trecho in relevantes:
-            validar_publico(trecho.texto)
-            validar_publico(trecho.nome_curso + ' ' + trecho.curso)
-        return relevantes
+        """Filtre similaridade e descarte trechos suspeitos sem culpar o visitante."""
+        from aplicacao.servicos.respostas.politica import validar_publico, EntradaRecusada
+        aprovados = []
+        for trecho in trechos:
+            if trecho.similaridade < self._limiar:
+                continue
+            try:
+                validar_publico(trecho.texto)
+                validar_publico(trecho.nome_curso + ' ' + trecho.curso)
+            except EntradaRecusada:
+                logger.warning('rag_trecho_descartado motivo=politica_publica')
+                continue
+            aprovados.append(trecho)
+        return aprovados
 
     def _buscar(self, pergunta):
-        """Recupere trechos e converta falhas da infraestrutura em ErroBusca."""
+        """Recupere trechos preservando falhas de cota ou prazo do provedor."""
+        from aplicacao.dominio.erros import ErroLimiteProvedor
+        from aplicacao.infra.gemini.gemini_http import ErroCotaGemini
         try:
             return self._base.buscar(pergunta, self._k)
+        except (ErroLimiteProvedor, ErroPrazo):
+            raise
+        except (ErroCotaGemini, TimeoutError) as erro:
+            raise falha_geracao(erro) from erro
         except Exception as erro:
             raise ErroBusca('Falha ao consultar o acervo.') from erro
 

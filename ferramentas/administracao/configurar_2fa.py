@@ -1,5 +1,5 @@
-from aplicacao.configuracao.caminhos import RAIZ
 """Configure o segundo fator localmente, sem oferecer cadastro remoto de segredos."""
+from aplicacao.configuracao.caminhos import RAIZ
 import base64
 import secrets
 import time
@@ -47,3 +47,4 @@ if __name__ == '__main__':
         main()
     except (ValueError, OSError, KeyboardInterrupt):
         print('Não foi possível concluir a configuração do segundo fator.')
+        raise SystemExit(1) from None

@@ -2,6 +2,7 @@
 const $ = (id) => document.getElementById(id);
 const state = {csrf: '', admin: false, chatEpoch: 0, pending: false};
 const status = (id, message = '') => { $(id).textContent = message; };
+let painelUploads;
 
 async function request(path, options = {}) {
   const controller = new AbortController();
@@ -30,6 +31,8 @@ async function session() {
   const data = await request('/api/sessao');
   state.csrf = data.csrf; state.admin = data.admin;
   $('otp-label').hidden = !data.exige_2fa; $('otp').required = !!data.exige_2fa;
+  $('otp-title').textContent = data.demonstracao ? 'Código de demonstração' : 'Código do autenticador';
+  $('demo-credentials').hidden = !data.demonstracao;
   renderAdmin();
 }
 async function show(view) {
@@ -39,7 +42,7 @@ async function show(view) {
 function renderAdmin() {
   $('login-form').hidden = state.admin;
   $('admin-panel').hidden = !state.admin;
-  if (!state.admin) $('documents').replaceChildren();
+  if (!state.admin) { $('documents').replaceChildren(); painelUploads?.limpar(); }
 }
 async function refreshAdmin() {
   try { await session(); if (state.admin) await listDocuments(); }
@@ -77,7 +80,12 @@ async function send(event) {
   const epoch = state.chatEpoch; state.pending = true; $('send').disabled = true;
   message('user', text); $('question').value = ''; status('chat-status', 'Consultando os documentos…');
   try { await sendQuestion(text, epoch); }
-  catch (error) { if (epoch === state.chatEpoch) status('chat-status', error.message); }
+  catch (error) {
+    if (epoch === state.chatEpoch) {
+      status('chat-status', error.message);
+      if (!$('question').value) $('question').value = text;
+    }
+  }
   finally { state.pending = false; $('send').disabled = false; }
 }
 async function sendQuestion(text, epoch) {
@@ -94,16 +102,19 @@ async function clearChat() {
   } catch (error) { status('chat-status', error.message); }
 }
 async function login(event) {
-  event.preventDefault(); const button = event.submitter; button.disabled = true;
+  event.preventDefault();
+  const button = event.submitter || $('login-form')?.querySelector('button');
+  if (button) button.disabled = true;
   try { await authenticate(); }
   catch (error) { status('login-status', error.message); }
-  finally { $('password').value = ''; $('otp').value = ''; button.disabled = false; }
+  finally { $('password').value = ''; $('otp').value = ''; if (button) button.disabled = false; }
 }
 async function authenticate() {
   await session();
   const data = await request('/api/admin/login', jsonOptions({usuario: $('username').value, senha: $('password').value, otp: $('otp').value}));
   state.csrf = data.csrf; state.admin = data.admin; renderAdmin(); status('login-status');
   await listDocuments();
+  $('files').focus();
 }
 async function logout() {
   try { await request('/api/admin/logout', {method: 'POST'}); state.admin = false; renderAdmin(); await session(); }
@@ -139,24 +150,11 @@ function uploadParameters(file) {
   return params;
 }
 async function upload(event) {
-  event.preventDefault(); $('upload').disabled = true;
-  try { await uploadFiles(); }
-  catch (error) { status('upload-status', error.message); }
-  finally { $('upload').disabled = false; await listDocuments(); }
-}
-async function uploadFiles() {
-  const files = Array.from($('files').files); const results = [];
-  for (const file of files) {
-    status('upload-status', `Processando ${file.name}… aguarde a confirmação.`);
-    results.push(await uploadOne(file));
-  }
-  status('upload-status', results.join('\n'));
+  event.preventDefault(); await painelUploads.enviar();
 }
 async function uploadOne(file) {
   try {
-    if (file.size > 25 * 1024 * 1024) throw new Error('Arquivo excede 25 MB.');
-    const data = await request(`/api/admin/documentos?${uploadParameters(file)}`, {method: 'POST', body: file, timeout: 310000});
-    if (data.estado !== 'indexado') throw new Error('Indexação não confirmada.');
+    const data = await painelUploads.publicar(file);
     return `${file.name}: ${data.trechos} trechos publicados.`;
   } catch (error) { return `${file.name}: ${error.message}`; }
 }
@@ -183,6 +181,8 @@ function bind() {
   $('forget').addEventListener('click', forget);
 }
 async function start() {
+  painelUploads = new window.PainelUploads({requisitar: request, parametros: uploadParameters,
+    atualizar: listDocuments, autorizado: () => state.admin});
   bind();
   try { await session(); await serviceInfo(); }
   catch (error) { status('global-status', error.message); $('mode').textContent = 'Serviço não confirmado'; }

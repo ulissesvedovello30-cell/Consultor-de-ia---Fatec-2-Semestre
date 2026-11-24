@@ -44,13 +44,16 @@ def validar_afirmacao(afirmacao, usados):
     return frase.strip(), list(dict.fromkeys(ids))
 
 
+MAX_RESPOSTA_CARACTERES = 5500
+
+
 def montar_afirmacoes(objeto, usados, melhor):
     """Retorne resposta com fontes verificadas; lance ValueError para estrutura inválida."""
     afirmacoes = objeto['afirmacoes']
     if not isinstance(afirmacoes, list) or not 1 <= len(afirmacoes) <= 5:
         raise ValueError('Quantidade inválida.')
     validadas = [validar_afirmacao(a, usados) for a in afirmacoes]
-    if sum(len(frase) for frase, ids in validadas) > 2400:
+    if sum(len(frase) for frase, ids in validadas) > MAX_RESPOSTA_CARACTERES:
         raise ValueError('Resposta muito longa.')
     linhas = [apresentar_afirmacao(frase, ids, usados) for frase, ids in validadas]
     citados = sorted({i for frase, ids in validadas for i in ids})
@@ -114,7 +117,14 @@ def afirmacoes_por_referencias(referencias, usados):
     if any(type(i) is not int or not 1 <= i <= len(usados) for i in referencias):
         raise ValueError('Referência não fornecida ao gerador.')
     completas = completar_referencias(referencias, usados)
-    return [{'texto': usados[i - 1].texto.strip(), 'fontes': [i]} for i in completas]
+    selecionadas, total = [], 0
+    for i in completas:
+        texto = usados[i - 1].texto.strip()
+        if selecionadas and total + len(texto) > MAX_RESPOSTA_CARACTERES:
+            break
+        selecionadas.append({'texto': texto, 'fontes': [i]})
+        total += len(texto)
+    return selecionadas
 
 
 def validar_evidencias(frase, ids, usados):

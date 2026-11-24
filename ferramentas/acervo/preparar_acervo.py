@@ -26,12 +26,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--forcar', action='store_true')
     args = parser.parse_args()
-    cliente = ClienteGemini(config.GEMINI_API_KEY)
+    cliente = ClienteGemini(config.GEMINI_API_KEY) if config.BUSCA_ACERVO == 'gemini' else None
     try:
         with banco_aberto() as engine:
             print(publicar(engine, cliente, args.forcar))
     finally:
-        cliente.fechar()
+        if cliente is not None:
+            cliente.fechar()
 
 
 if __name__ == '__main__':
